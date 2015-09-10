@@ -7,6 +7,15 @@ import java.time.LocalDateTime;
  * 11.01.2015.
  */
 public class UserMeal {
+    @Override
+    public String toString() {
+        return "UserMeal{" +
+                "dateTime=" + dateTime.toLocalTime() +
+                ", description='" + description + '\'' +
+                ", calories=" + calories +
+                '}';
+    }
+
     protected final LocalDateTime dateTime;
 
     protected final String description;
