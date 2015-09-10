@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * GKislin
@@ -31,24 +30,21 @@ public class UserMealsUtil {
     }
 
     public static List<UserMealWithExceed> getFilteredMealsWithExceeded(List<UserMeal> mealList, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        Set<LocalDate> uniqueDates = new HashSet<>();
-        mealList.stream().forEach(meal -> uniqueDates.add(meal.getDateTime().toLocalDate()));
+
 
         List<UserMealWithExceed> result = new ArrayList<>();
 
-        for (LocalDate ld : uniqueDates) {
-
-            IntSummaryStatistics incomeStats = mealList.stream()
-                    .filter(meal -> meal.getDateTime().toLocalDate().equals(ld))
-                    .collect(Collectors.summarizingInt(UserMeal::getCalories));
-            boolean exceedLimit = incomeStats.getSum() > caloriesPerDay;
-            mealList.stream()
-                    .filter(meal -> meal.getDateTime().toLocalDate().equals(ld))
-                    .filter(meal -> TimeUtil.isBetween(meal.getDateTime().toLocalTime(), startTime, endTime))
-                    .forEach(meal -> {
-                        result.add(get(meal, exceedLimit));
-                    });
+        Map<LocalDate, Integer> dates = new HashMap<>();
+        for (UserMeal meal : mealList) {
+            dates.merge(meal.getDateTime().toLocalDate(), meal.getCalories(), Integer::sum);
         }
+
+
+        mealList.stream()
+                .filter(meal -> TimeUtil.isBetween(meal.getDateTime().toLocalTime(), startTime, endTime))
+                .forEach(meal -> {
+                    result.add(get(meal, dates.get(meal.getDateTime().toLocalDate()) > caloriesPerDay));
+                });
 
 
         return result;
@@ -57,4 +53,5 @@ public class UserMealsUtil {
     private static UserMealWithExceed get(UserMeal meal, boolean exceed) {
         return new UserMealWithExceed(meal.getDateTime(), meal.getDescription(), meal.getCalories(), exceed);
     }
+
 }
